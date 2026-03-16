@@ -20,7 +20,14 @@ marked.setOptions({
         return hljs.highlightAuto(code).value;
     },
     breaks: true,
-    gfm: true
+    gfm: true,
+    renderer: {
+        code: function(code, language) {
+            const validLang = language && hljs.getLanguage(language) ? language : 'plaintext';
+            const highlighted = hljs.highlight(code, { language: validLang }).value;
+            return `<pre><code class="hljs language-${validLang}">${highlighted}</code></pre>`;
+        }
+    }
 });
 
 window.chatApp = function() {
@@ -32,7 +39,7 @@ window.chatApp = function() {
         conversations: [],
         
         init() {
-            this.loadFromLocalStorage();
+            this.loadConversations();
             if (this.conversations.length === 0) {
                 this.startNewChat();
             } else {
@@ -40,55 +47,72 @@ window.chatApp = function() {
             }
         },
         
-        startNewChat() {
-            const newId = Date.now().toString();
-            const newConversation = {
-                id: newId,
-                title: 'New chat',
-                messages: [],
-                createdAt: new Date().toISOString()
-            };
-            this.conversations.unshift(newConversation);
-            this.currentConversationId = newId;
-            this.messages = [];
-            this.saveToLocalStorage();
+        async loadConversations() {
+            try {
+                const response = await axios.get('/api/conversations');
+                this.conversations = response.data;
+            } catch (error) {
+                console.error('Failed to load conversations:', error);
+            }
         },
         
-        loadConversation(id) {
-            this.currentConversationId = id;
-            const conversation = this.conversations.find(c => c.id === id);
-            if (conversation) {
-                this.messages = conversation.messages;
+        startNewChat() {
+            this.createConversation('New chat');
+        },
+        
+        async createConversation(title) {
+            try {
+                const response = await axios.post('/api/conversations', { title });
+                this.conversations.unshift(response.data);
+                this.currentConversationId = response.data.id;
+                this.messages = [];
                 this.$nextTick(() => {
                     this.scrollToBottom();
                 });
+            } catch (error) {
+                console.error('Failed to create conversation:', error);
+            }
+        },
+        
+        async loadConversation(id) {
+            try {
+                const response = await axios.get(`/api/conversations/${id}`);
+                this.currentConversationId = response.data.id;
+                this.messages = response.data.messages || [];
+                this.$nextTick(() => {
+                    this.scrollToBottom();
+                });
+            } catch (error) {
+                console.error('Failed to load conversation:', error);
             }
         },
         
         sendMessage() {
             if (!this.inputMessage.trim() || this.isStreaming) return;
             
+            const userMessageContent = this.inputMessage;
+            this.inputMessage = '';
+            
             const userMessage = {
                 id: Date.now().toString(),
                 role: 'user',
-                content: this.inputMessage,
+                content: userMessageContent,
                 created_at: new Date().toISOString()
             };
             
             this.messages.push(userMessage);
-            this.saveToLocalStorage();
-            
-            const userMessageContent = this.inputMessage;
-            this.inputMessage = '';
+            this.$nextTick(() => {
+                this.scrollToBottom();
+            });
             
             if (this.messages.filter(m => m.role === 'user').length === 1) {
                 this.autoRenameConversation(userMessageContent);
             }
             
-            this.simulateAIResponse(userMessageContent);
+            this.streamAIResponse(userMessageContent);
         },
         
-        async simulateAIResponse(userMessage) {
+        async streamAIResponse(userMessage) {
             this.isStreaming = true;
             
             const aiMessage = {
@@ -99,64 +123,100 @@ window.chatApp = function() {
             };
             this.messages.push(aiMessage);
             
-            const responses = [
-                "Hello! I'm your AI assistant. How can I help you today?",
-                "That's an interesting question! Let me think about that...",
-                "I'd be happy to help with that. Here's what I know:",
-                "Great question! Let me break this down for you..."
-            ];
-            
-            const responseText = responses[Math.floor(Math.random() * responses.length)];
-            let currentContent = '';
-            
-            for (let i = 0; i < responseText.length; i++) {
-                currentContent += responseText[i];
-                aiMessage.content = currentContent;
-                this.$nextTick(() => {
-                    this.scrollToBottom();
+            try {
+                const url = this.currentConversationId 
+                    ? `/api/chat/stream/${this.currentConversationId}`
+                    : '/api/chat/stream';
+                
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'text/event-stream',
+                    },
+                    body: JSON.stringify({ message: userMessage }),
                 });
-                await new Promise(resolve => setTimeout(resolve, 30));
+                
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+                let buffer = '';
+                
+                while (true) {
+                    const { done, value } = await reader.read();
+                    if (done) break;
+                    
+                    buffer += decoder.decode(value, { stream: true });
+                    const lines = buffer.split('\n');
+                    buffer = lines.pop() || '';
+                    
+                    for (const line of lines) {
+                        if (line.startsWith('data: ')) {
+                            const data = JSON.parse(line.slice(6));
+                            
+                            if (data.done) {
+                                this.currentConversationId = data.conversation.id;
+                                await this.loadConversations();
+                            } else {
+                                aiMessage.content += data.content;
+                                this.$nextTick(() => {
+                                    this.scrollToBottom();
+                                });
+                            }
+                        }
+                    }
+                }
+            } catch (error) {
+                console.error('Streaming error:', error);
+                aiMessage.content = 'Sorry, something went wrong. Please try again.';
             }
             
             this.isStreaming = false;
-            this.saveToLocalStorage();
         },
         
-        autoRenameConversation(firstMessage) {
+        async autoRenameConversation(firstMessage) {
             const maxLength = 30;
             const title = firstMessage.length > maxLength 
                 ? firstMessage.substring(0, maxLength) + '...' 
                 : firstMessage;
             
-            const conversation = this.conversations.find(c => c.id === this.currentConversationId);
-            if (conversation) {
-                conversation.title = title;
-                this.saveToLocalStorage();
+            try {
+                await axios.post(`/api/conversations/${this.currentConversationId}/rename`, { title });
+                await this.loadConversations();
+            } catch (error) {
+                console.error('Failed to rename conversation:', error);
             }
         },
         
-        renameConversation(id) {
+        async renameConversation(id) {
             const conversation = this.conversations.find(c => c.id === id);
             if (conversation) {
                 const newTitle = prompt('Enter new title:', conversation.title);
                 if (newTitle && newTitle.trim()) {
-                    conversation.title = newTitle.trim();
-                    this.saveToLocalStorage();
+                    try {
+                        await axios.post(`/api/conversations/${id}/rename`, { title: newTitle.trim() });
+                        await this.loadConversations();
+                    } catch (error) {
+                        console.error('Failed to rename conversation:', error);
+                    }
                 }
             }
         },
         
-        deleteConversation(id) {
+        async deleteConversation(id) {
             if (confirm('Are you sure you want to delete this conversation?')) {
-                this.conversations = this.conversations.filter(c => c.id !== id);
-                if (this.currentConversationId === id) {
-                    if (this.conversations.length > 0) {
-                        this.loadConversation(this.conversations[0].id);
-                    } else {
-                        this.startNewChat();
+                try {
+                    await axios.delete(`/api/conversations/${id}`);
+                    this.conversations = this.conversations.filter(c => c.id !== id);
+                    if (this.currentConversationId === id) {
+                        if (this.conversations.length > 0) {
+                            this.loadConversation(this.conversations[0].id);
+                        } else {
+                            this.startNewChat();
+                        }
                     }
+                } catch (error) {
+                    console.error('Failed to delete conversation:', error);
                 }
-                this.saveToLocalStorage();
             }
         },
         
@@ -184,32 +244,23 @@ window.chatApp = function() {
         autoResize(event) {
             const textarea = event.target;
             textarea.style.height = 'auto';
-            textarea.style.height = Math.min(textarea.scrollHeight, 128) + 'px';
+            const newHeight = Math.min(textarea.scrollHeight, 160);
+            textarea.style.height = newHeight + 'px';
+            
+            if (newHeight > 52) {
+                textarea.classList.add('pt-4');
+            } else {
+                textarea.classList.remove('pt-4');
+            }
         },
         
         scrollToBottom() {
             const container = document.getElementById('chat-container');
             if (container) {
-                container.scrollTop = container.scrollHeight;
-            }
-        },
-        
-        saveToLocalStorage() {
-            const conversation = this.conversations.find(c => c.id === this.currentConversationId);
-            if (conversation) {
-                conversation.messages = this.messages;
-            }
-            localStorage.setItem('ai-chat-conversations', JSON.stringify(this.conversations));
-        },
-        
-        loadFromLocalStorage() {
-            try {
-                const saved = localStorage.getItem('ai-chat-conversations');
-                if (saved) {
-                    this.conversations = JSON.parse(saved);
-                }
-            } catch (e) {
-                console.error('Failed to load from localStorage:', e);
+                container.scrollTo({
+                    top: container.scrollHeight,
+                    behavior: 'smooth'
+                });
             }
         }
     };

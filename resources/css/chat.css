@@ -1,71 +1,81 @@
 @import 'tailwindcss';
 
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&display=swap');
+
 body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #0f0f23 100%);
 }
 
-#chat-container::-webkit-scrollbar {
+* {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(139, 92, 246, 0.3) transparent;
+}
+
+*::-webkit-scrollbar {
     width: 8px;
+    height: 8px;
 }
 
-#chat-container::-webkit-scrollbar-track {
+*::-webkit-scrollbar-track {
     background: transparent;
-}
-
-#chat-container::-webkit-scrollbar-thumb {
-    background: #4b5563;
     border-radius: 4px;
 }
 
-#chat-container::-webkit-scrollbar-thumb:hover {
-    background: #6b7280;
+*::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.3), rgba(139, 92, 246, 0.2));
+    border-radius: 4px;
+    border: 1px solid rgba(139, 92, 246, 0.1);
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, rgba(139, 92, 246, 0.5), rgba(139, 92, 246, 0.4));
+}
+
+#chat-container::-webkit-scrollbar {
+    width: 10px;
 }
 
 aside::-webkit-scrollbar {
     width: 6px;
 }
 
-aside::-webkit-scrollbar-track {
-    background: transparent;
-}
-
-aside::-webkit-scrollbar-thumb {
-    background: #374151;
-    border-radius: 3px;
-}
-
-aside::-webkit-scrollbar-thumb:hover {
-    background: #4b5563;
-}
-
 pre {
-    background: #1e1e1e;
-    border-radius: 8px;
-    margin: 12px 0;
+    background: linear-gradient(135deg, rgba(30, 30, 46, 0.95), rgba(20, 20, 36, 0.98));
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: 12px;
+    margin: 16px 0;
     overflow-x: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 pre code {
-    font-family: 'Fira Code', 'Consolas', monospace;
+    font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
     font-size: 14px;
-    line-height: 1.5;
+    line-height: 1.6;
+    padding: 16px;
 }
 
 code {
-    font-family: 'Fira Code', 'Consolas', monospace;
-    background: rgba(255, 255, 255, 0.1);
-    padding: 2px 6px;
-    border-radius: 4px;
+    font-family: 'JetBrains Mono', 'Consolas', 'Monaco', monospace;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(139, 92, 246, 0.05));
+    padding: 3px 8px;
+    border-radius: 6px;
     font-size: 0.875em;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 pre code {
     background: none;
-    padding: 12px;
+    padding: 16px;
+    border: none;
+    box-shadow: none;
 }
 
 p {
-    margin-bottom: 0.75rem;
+    margin-bottom: 1rem;
+    line-height: 1.7;
 }
 
 p:last-child {
@@ -73,71 +83,115 @@ p:last-child {
 }
 
 ul, ol {
-    margin-left: 1.5rem;
-    margin-bottom: 0.75rem;
+    margin-left: 2rem;
+    margin-bottom: 1rem;
 }
 
 li {
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.5rem;
+    line-height: 1.7;
+}
+
+ul li::marker {
+    color: rgba(139, 92, 246, 0.8);
+}
+
+ol li::marker {
+    color: rgba(139, 92, 246, 0.8);
+    font-weight: 600;
 }
 
 blockquote {
-    border-left: 3px solid #6b7280;
-    padding-left: 1rem;
-    margin: 0.75rem 0;
-    color: #9ca3af;
+    border-left: 4px solid rgba(139, 92, 246, 0.5);
+    padding-left: 1.25rem;
+    margin: 1.25rem 0;
+    color: rgba(156, 163, 175, 0.9);
+    background: linear-gradient(90deg, rgba(139, 92, 246, 0.05), transparent);
+    padding: 1rem 1.25rem;
+    border-radius: 0 8px 8px 0;
+    font-style: italic;
 }
 
 h1, h2, h3, h4, h5, h6 {
-    font-weight: 600;
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
+    font-weight: 700;
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    background: linear-gradient(135deg, #fff 0%, rgba(139, 92, 246, 0.8) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
 }
 
-h1 { font-size: 1.875rem; }
-h2 { font-size: 1.5rem; }
-h3 { font-size: 1.25rem; }
+h1 { font-size: 2.25rem; letter-spacing: -0.02em; }
+h2 { font-size: 1.75rem; letter-spacing: -0.015em; }
+h3 { font-size: 1.375rem; letter-spacing: -0.01em; }
 
 table {
     width: 100%;
     border-collapse: collapse;
-    margin: 1rem 0;
+    margin: 1.5rem 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
 }
 
 th, td {
-    border: 1px solid #4b5563;
-    padding: 0.5rem 0.75rem;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    padding: 0.875rem 1rem;
     text-align: left;
 }
 
 th {
-    background: #374151;
+    background: linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(139, 92, 246, 0.1));
     font-weight: 600;
+    color: white;
+    text-transform: uppercase;
+    font-size: 0.75rem;
+    letter-spacing: 0.05em;
+}
+
+tr:nth-child(even) {
+    background: rgba(139, 92, 246, 0.03);
+}
+
+tr:hover {
+    background: rgba(139, 92, 246, 0.06);
 }
 
 a {
-    color: #60a5fa;
+    color: rgba(167, 139, 250, 0.9);
     text-decoration: underline;
+    text-underline-offset: 2px;
+    transition: all 0.2s;
 }
 
 a:hover {
-    color: #93c5fd;
+    color: rgba(167, 139, 250, 1);
+    text-decoration-style: wavy;
+}
+
+hr {
+    border: none;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.3), transparent);
+    margin: 2rem 0;
 }
 
 .hljs {
-    background: #1e1e1e !important;
+    background: transparent !important;
     color: #d4d4d4;
 }
 
 .hljs-comment,
 .hljs-quote {
     color: #6a9955;
+    font-style: italic;
 }
 
 .hljs-keyword,
 .hljs-selector-tag,
 .hljs-subst {
-    color: #569cd6;
+    color: #c678dd;
 }
 
 .hljs-number,
@@ -145,23 +199,23 @@ a:hover {
 .hljs-variable,
 .hljs-template-variable,
 .hljs-tag .hljs-attr {
-    color: #b5cea8;
+    color: #d19a66;
 }
 
 .hljs-string,
 .hljs-doctag {
-    color: #ce9178;
+    color: #98c379;
 }
 
 .hljs-title,
 .hljs-section,
 .hljs-selector-id {
-    color: #dcdcaa;
+    color: #61afef;
 }
 
 .hljs-type,
 .hljs-class .hljs-title {
-    color: #4ec9b0;
+    color: #e5c07b;
 }
 
 .hljs-tag,
@@ -173,46 +227,115 @@ a:hover {
 
 .hljs-regexp,
 .hljs-link {
-    color: #d16969;
+    color: #e06c75;
 }
 
 .hljs-symbol,
 .hljs-bullet {
-    color: #4ec9b0;
+    color: #61afef;
 }
 
 .hljs-built_in,
 .hljs-builtin-name {
-    color: #4ec9b0;
+    color: #e5c07b;
 }
 
 .hljs-meta {
-    color: #808080;
+    color: #abb2bf;
 }
 
 .hljs-deletion {
-    background: #fdd;
-    color: #900;
+    background: rgba(224, 108, 117, 0.2);
+    color: #e06c75;
+    padding: 2px 4px;
+    border-radius: 4px;
 }
 
 .hljs-addition {
-    background: #dfd;
-    color: #090;
+    background: rgba(152, 195, 121, 0.2);
+    color: #98c379;
+    padding: 2px 4px;
+    border-radius: 4px;
 }
 
 .hljs-emphasis {
     font-style: italic;
+    color: #c678dd;
 }
 
 .hljs-strong {
     font-weight: bold;
+    color: #c678dd;
 }
 
 @keyframes bounce {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-4px); }
+    0%, 100% { 
+        transform: translateY(0);
+        opacity: 1;
+    }
+    50% { 
+        transform: translateY(-6px);
+        opacity: 0.7;
+    }
 }
 
 .animate-bounce {
-    animation: bounce 1s infinite;
+    animation: bounce 1.4s cubic-bezier(0.36, 0, 0.66, -0.56) infinite;
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -1000px 0;
+    }
+    100% {
+        background-position: 1000px 0;
+    }
+}
+
+.shimmer {
+    background: linear-gradient(
+        90deg,
+        rgba(255, 255, 255, 0) 0%,
+        rgba(255, 255, 255, 0.1) 50%,
+        rgba(255, 255, 255, 0) 100%
+    );
+    background-size: 1000px 100%;
+    animation: shimmer 2s infinite;
+}
+
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0px);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+.float-animation {
+    animation: float 3s ease-in-out infinite;
+}
+
+@keyframes pulse-glow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(139, 92, 246, 0.3);
+    }
+    50% {
+        box-shadow: 0 0 40px rgba(139, 92, 246, 0.6);
+    }
+}
+
+.pulse-glow {
+    animation: pulse-glow 2s ease-in-out infinite;
+}
+
+textarea:focus {
+    outline: none;
+}
+
+.glass-effect {
+    background: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
